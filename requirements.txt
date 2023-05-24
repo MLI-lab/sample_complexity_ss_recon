@@ -1,0 +1,11 @@
+jupyter==1.0.0
+matplotlib==3.5.1
+numpy==1.21.2
+opencv-python==4.5.5.64
+scikit-learn==1.0.2
+scikit-image==0.19.1
+torch==1.10.0
+h5py==2.10.0
+torchmetrics==0.5.1
+protobuf==3.19.3
+runstats==2.0.0
