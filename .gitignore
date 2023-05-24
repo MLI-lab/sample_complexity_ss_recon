@@ -1,0 +1,9 @@
+*.ckpt
+*events.out*
+*/dataset_cache.pkl
+*.pyc
+*ipynb_checkpoints*
+*.h5
+*.png
+modifyjson.ipynb
+E001_t100_l2c128_bs1_lr25e-06_run3
