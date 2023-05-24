@@ -1,0 +1,1 @@
+{"acceleration_total": 3.0, "acceleration": 4.0, "trainset_size": 50, "all_seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "best_seed": 3, "patience": 20, "val_epoch_interval": 2}
