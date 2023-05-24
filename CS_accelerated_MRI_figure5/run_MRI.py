@@ -30,7 +30,6 @@ exp_nums =  ['001']
 #train_223_selfsup_slice
 #train_96_selfsup_slice
 #train_48_selfsup_slice
-#val_728_selfsup_slice
 #test_4713_selfsup_slice
 #val_313_selfsup_slice
 
