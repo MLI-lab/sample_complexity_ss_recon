@@ -1,4 +1,4 @@
-# Analyzing_Sample_Complexity_Self_Supervised_Image_Reconstruction
+# Analyzing_Sample_Complexity_of_Self_Supervised_Image_Reconstruction
 
 Each folder contains the code to reproduce the results in one of the Figures 1,2,4,5 in the main boday of the paper __Analyzing the Sample Complexity of Self-Supervised Image Reconstruction Methods__.
 
@@ -36,5 +36,3 @@ The code for MRI reconstruction partly builds on the [fastMRI repository]( https
 - Zbontar et al. "fastMRI: An Open Dataset and Benchmarks for Accelerated MRI". In: https://arxiv.org/abs/1811.08839* (2018).
 - Russakovsky et al. "ImageNet Large Scale Visual Recognition Challenge". In: *International Journal of Computer Vision* (2015).
 
-# Analyzing_Sample_Complexity_of_Self_Supervised_Image_Reconstruction
-# Analyzing_Sample_Complexity_of_Self_Supervised_Image_Reconstruction
