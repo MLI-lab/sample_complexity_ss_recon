@@ -33,6 +33,7 @@ ImageNet is an open dataset, and you can request access at https://image-net.org
 ## Acknowledgments and references
 The code for MRI reconstruction partly builds on the [fastMRI repository]( https://github.com/facebookresearch/fastMRI), and the code for image denoising on [Robust And Interpretable Blind Image Denoising Via Bias-Free Convolutional Neural Networks](https://github.com/LabForComputationalVision/bias_free_denoising).
 
+- Klug et al. "Analyzing the Sample Complexity of Self-Supervised Image Reconstruction Methods". In https://arxiv.org/abs/2305.19079 (2023).
 - Zbontar et al. "fastMRI: An Open Dataset and Benchmarks for Accelerated MRI". In: https://arxiv.org/abs/1811.08839* (2018).
 - Russakovsky et al. "ImageNet Large Scale Visual Recognition Challenge". In: *International Journal of Computer Vision* (2015).
 
