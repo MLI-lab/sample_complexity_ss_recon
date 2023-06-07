@@ -6,6 +6,8 @@ Figure 2 contains our results for the performance of models trained with noise2n
 
 To start training a model for one of the methods and a desired training set size choose the correct configuration file from the options folder and load it in the respective `config_run.ipynb` notebook.
 
+Use `Noise2Noise/train_network_for_histogram.ipynb` to reproduce the histogram of the variance of the stochastic gradients in Figure 2.
+
 ## References
 [1] Lehtinen et al. "Noise2Noise: Learning Image Restoration without Clean Data". In: Proceedings of the 35th International Conference on Machine Learning, PMLR, 2018.
 
