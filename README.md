@@ -1,6 +1,6 @@
-# Analyzing_Sample_Complexity_of_Self_Supervised_Image_Reconstruction
+# Analyzing the Sample Complexity of Self-Supervised Image Reconstruction
 
-Each folder contains the code to reproduce the results in one of the Figures 1,2,4,5 in the main boday of the paper __Analyzing the Sample Complexity of Self-Supervised Image Reconstruction Methods__.
+Each folder contains the code to reproduce the results in one of the Figures 1,2,4,5 in the main body of the paper [Analyzing the Sample Complexity of Self-Supervised Image Reconstruction Methods](https://arxiv.org/abs/2305.19079).
 
 In particular
 - Figure 1: Simulations for subspace denoising
