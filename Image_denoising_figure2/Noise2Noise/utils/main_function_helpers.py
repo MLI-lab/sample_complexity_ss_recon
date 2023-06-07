@@ -43,22 +43,13 @@ def load_model(args):
     args = argparse.Namespace(**{ **vars(state_dict["args"]), "no_log": True})
 
     #model = models.build_model(args).to(device)
-    if args.no_pooling:
-        model = models.no_unet_fastMRI(
-            in_chans=args.in_chans,
-            chans = args.chans,
-            num_pool_layers = args.num_pool_layers,
-            drop_prob = 0.0,
-            residual_connection = args.residual,
-        ).to(device)
-    else:
-        model = models.unet_fastMRI(
-            in_chans=args.in_chans,
-            chans = args.chans,
-            num_pool_layers = args.num_pool_layers,
-            drop_prob = 0.0,
-            residual_connection = args.residual,
-        ).to(device)
+    model = models.unet_fastMRI(
+        in_chans=args.in_chans,
+        chans = args.chans,
+        num_pool_layers = args.num_pool_layers,
+        drop_prob = 0.0,
+        residual_connection = args.residual,
+    ).to(device)
     model.load_state_dict(state_dict["model"][0])
     model.eval()
     return model
@@ -103,22 +94,13 @@ def cli_main(args):
     utils.init_logging(args)
     
     # Build data loaders, a model and an optimizer
-    if args.no_pooling:
-        model = models.no_unet_fastMRI(
-            in_chans=args.in_chans,
-            chans = args.chans,
-            num_pool_layers = args.num_pool_layers,
-            drop_prob = 0.0,
-            residual_connection = args.residual,
-        ).to(device)
-    else:
-        model = models.unet_fastMRI(
-            in_chans=args.in_chans,
-            chans = args.chans,
-            num_pool_layers = args.num_pool_layers,
-            drop_prob = 0.0,
-            residual_connection = args.residual,
-        ).to(device)
+    model = models.unet_fastMRI(
+        in_chans=args.in_chans,
+        chans = args.chans,
+        num_pool_layers = args.num_pool_layers,
+        drop_prob = 0.0,
+        residual_connection = args.residual,
+    ).to(device)
     
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     
@@ -245,31 +227,6 @@ def cli_main(args):
                     valid_meters["valid_ssim"].update(valid_ssim.item())
 
 
-                    #if sample_id ==0:
-                    #print(sample_id)
-                    #plt.imshow(  sample_clean[0].cpu().permute(1, 2, 0)  )
-                    #plt.show()
-                    #plt.imshow(  noisy_inputs[0].cpu().permute(1, 2, 0)  )
-                    #plt.show()
-                    #plt.imshow(  output[0].cpu().permute(1, 2, 0)  )
-                    #plt.show()
-                    #print(sample_clean.shape)
-                    #print(noisy_inputs.shape)
-                    #print(psnr(noisy_inputs, sample_clean))
-                    #print(valid_psnr)
-                    #noise = get_noise(sample_clean, noise_std = args.noise_std/255.)
-                    #noisy_inputs = noise + sample_clean
-                    #plt.imshow(  noisy_inputs[0].cpu().permute(1, 2, 0)  )
-                    #output = model(noisy_inputs)
-                    #plt.show()
-                    #plt.imshow(  output[0].cpu().permute(1, 2, 0)  )
-                    #plt.show()
-                    #print(psnr(output, sample_clean))
-
-                    #if writer is not None and sample_id < 2:
-                    #    image = torch.cat([image_H, image_L, output], dim=0)
-                    #    image = torchvision.utils.make_grid(image.clamp(0, 1), nrow=2, normalize=False)
-                    #    writer.add_image(f"valid_samples/{sample_id}", image, global_step)
 
             if writer is not None:
                 # Average is correct valid_meters['valid_psnr'].avg since .val would be just the psnr of last sample in val set.
@@ -470,99 +427,7 @@ def f_restore_file(args):
         args.experiment_dir = args.restore_mode[:args.restore_mode.find('/checkpoints')]
             
 
-def extract_tensorboard_information(dist_exps_list):
-    '''
-    https://stackoverflow.com/questions/41074688/how-do-you-read-tensorboard-files-programmatically
-    '''
-    print('Extract and store information from tensorboard.')
-    for exp in dist_exps_list:
-        #print(exp)
-        # Get train size
-        ts = int(exp[exp.find('_t')+2:exp.find('c')-3])
-        # Get batch size
-        bs = int(exp[exp.find('_bs')+3:exp.find('_lr')])    
 
-        checkpoint_path = glob.glob('../' + exp +'/unet*')
-        if len(checkpoint_path) != 1:
-            raise ValueError("There is either no or more than one model to load events from")
-
-        events = sorted(glob.glob(checkpoint_path[0]+"/events*"), key=os.path.getmtime)
-        #events.sort(key = lambda x: int(x[x.find('tfevents.')+9:x.find('.DA')]))
-        events.sort(key = lambda x: int(x[x.find('tfevents.')+9:x.find('tfevents.')+19]))
-        #print(events)
-
-        if events:
-            epoch = np.zeros((1,3))
-            ssim_valid = np.zeros((1,3))
-            psnr_valid = np.zeros((1,3))
-            loss_train = np.zeros((1,3))
-            lr = np.zeros((1,3))
-
-            for event in events:
-                start = time.process_time()
-                ea = event_accumulator.EventAccumulator(event,
-                    size_guidance={event_accumulator.SCALARS: 0,event_accumulator.IMAGES: 1,})
-                ea.Reload()
-
-                # Get all other data as numpy arrays of size num_epochs x 2, with steps in first column and calues in second column
-                w_times, step_nums, vals = zip(*ea.Scalars('epoch'))
-                epoch_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                w_times, step_nums, vals = zip(*ea.Scalars('ssim/valid'))
-                ssim_valid_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                w_times, step_nums, vals = zip(*ea.Scalars('psnr/valid'))
-                psnr_valid_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                w_times, step_nums, vals = zip(*ea.Scalars('loss/train'))
-                loss_train_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                w_times, step_nums, vals = zip(*ea.Scalars('lr'))
-                lr_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                epoch = np.vstack((epoch,epoch_tmp))
-                ssim_valid = np.vstack((ssim_valid,ssim_valid_tmp))
-                psnr_valid = np.vstack((psnr_valid,psnr_valid_tmp))
-                loss_train = np.vstack((loss_train,loss_train_tmp))
-                lr = np.vstack((lr,lr_tmp))
-
-                end = time.process_time() - start
-                #print(np.round(end/60,3))
-
-            epoch = epoch[1:,:]
-            ssim_valid = ssim_valid[1:,:]
-            psnr_valid = psnr_valid[1:,:]
-            loss_train = loss_train[1:,:]
-            lr = lr[1:,:]
-
-            # Compute stats
-            num_epochs = epoch[-1,1]+1
-            best_epoch = np.where(psnr_valid[:,1]==np.max(psnr_valid[:,1]))[0][0]+1
-            steps_per_epoch = np.ceil(ts/bs)
-            best_steps = steps_per_epoch * best_epoch
-            gpu_hours = np.min(epoch[1:,2]-epoch[0:-1,2])*num_epochs/(60*60)
-            #print(gpu_hours)        
-
-            # Save to dict
-            stats_dict = {}
-            stats_dict['exp_name'] = exp
-            stats_dict['batch_size'] = bs
-            stats_dict['train_size'] = ts
-            stats_dict['steps_per_epoch'] = steps_per_epoch
-            stats_dict['num_epochs'] = num_epochs
-            stats_dict['best_epoch'] = best_epoch
-            stats_dict['best_steps'] = best_steps
-            stats_dict['lr'] = lr
-            stats_dict['loss_train'] = loss_train
-            stats_dict['psnr_valid'] = psnr_valid
-            stats_dict['ssim_valid'] = ssim_valid
-            stats_dict['epoch'] = epoch
-            stats_dict['gpu_hours'] = gpu_hours
-
-            np.save(checkpoint_path[0]+"/tb_events_dict.npy", stats_dict)
-        else:
-            print('This experiment is on a different server.')
-    print('All tensorboard event files extracted.')
 
 def infer_images(args):
     USE_CUDA = True
@@ -610,10 +475,8 @@ def infer_images(args):
         noise =  torch.randn(ISource.shape,generator = gen) * args.noise_std/255.
         INoisy = noise.to(device) + ISource
         
-        # Why do we clamp the output into range [0,1]?
+
         out = torch.clamp(net(INoisy), 0., 1.).cpu()
-        #out = net(INoisy).cpu()
-        # print(out.size()) (1,3,297,500) (BxCxHxW)
         out = torch.squeeze(out,0) # Get rid of the 1 in dim 0.
         im = transformIm(out)
 

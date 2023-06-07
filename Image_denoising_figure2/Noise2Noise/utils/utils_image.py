@@ -65,18 +65,12 @@ def calculate_weights_indices(in_length, out_length, scale, kernel, kernel_width
     # Output-space coordinates
     x = torch.linspace(1, out_length, out_length)
 
-    # Input-space coordinates. Calculate the inverse mapping such that 0.5
-    # in output space maps to 0.5 in input space, and 0.5+scale in output
-    # space maps to 1.5 in input space.
+
     u = x / scale + 0.5 * (1 - 1 / scale)
 
-    # What is the left-most pixel that can be involved in the computation?
     left = torch.floor(u - kernel_width / 2)
 
-    # What is the maximum number of pixels that can be involved in the
-    # computation?  Note: it's OK to use an extra pixel here; if the
-    # corresponding weights are all zero, it will be eliminated at the end
-    # of this function.
+
     P = math.ceil(kernel_width) + 2
 
     # The indices of the input pixels involved in computing the k-th output
@@ -116,9 +110,6 @@ def calculate_weights_indices(in_length, out_length, scale, kernel, kernel_width
 # imresize for tensor image [0, 1]
 # --------------------------------------------
 def imresize(img, scale, antialiasing=True):
-    # Now the scale should be the same for H and W
-    # input: img: pytorch tensor, CHW or HW [0,1]
-    # output: CHW or HW [0,1] w/o round
     need_squeeze = True if img.dim() == 2 else False
     if need_squeeze:
         img.unsqueeze_(0)
@@ -127,10 +118,6 @@ def imresize(img, scale, antialiasing=True):
     kernel_width = 4
     kernel = 'cubic'
 
-    # Return the desired dimension order for performing the resize.  The
-    # strategy is to perform the resize first along the dimension with the
-    # smallest scale factor.
-    # Now we do not support this.
 
     # get weights and indices
     weights_H, indices_H, sym_len_Hs, sym_len_He = calculate_weights_indices(

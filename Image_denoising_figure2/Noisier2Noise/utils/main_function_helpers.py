@@ -16,7 +16,6 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
 import numpy as np
-from tensorboard.backend.event_processing import event_accumulator
 
 import utils
 import models 
@@ -42,23 +41,13 @@ def load_model(args):
     state_dict = torch.load(checkpoint_path, map_location=lambda s, l: default_restore_location(s, "cpu"))
     args = argparse.Namespace(**{ **vars(state_dict["args"]), "no_log": True})
 
-    #model = models.build_model(args).to(device)
-    if args.no_pooling:
-        model = models.no_unet_fastMRI(
-            in_chans=args.in_chans,
-            chans = args.chans,
-            num_pool_layers = args.num_pool_layers,
-            drop_prob = 0.0,
-            residual_connection = args.residual,
-        ).to(device)
-    else:
-        model = models.unet_fastMRI(
-            in_chans=args.in_chans,
-            chans = args.chans,
-            num_pool_layers = args.num_pool_layers,
-            drop_prob = 0.0,
-            residual_connection = args.residual,
-        ).to(device)
+    model = models.unet_fastMRI(
+        in_chans=args.in_chans,
+        chans = args.chans,
+        num_pool_layers = args.num_pool_layers,
+        drop_prob = 0.0,
+        residual_connection = args.residual,
+    ).to(device)
     model.load_state_dict(state_dict["model"][0])
     model.eval()
     return model
@@ -103,26 +92,16 @@ def cli_main(args):
     utils.init_logging(args)
     
     # Build data loaders, a model and an optimizer
-    if args.no_pooling:
-        model = models.no_unet_fastMRI(
-            in_chans=args.in_chans,
-            chans = args.chans,
-            num_pool_layers = args.num_pool_layers,
-            drop_prob = 0.0,
-            residual_connection = args.residual,
-        ).to(device)
-    else:
-        model = models.unet_fastMRI(
-            in_chans=args.in_chans,
-            chans = args.chans,
-            num_pool_layers = args.num_pool_layers,
-            drop_prob = 0.0,
-            residual_connection = args.residual,
-        ).to(device)
+    model = models.unet_fastMRI(
+        in_chans=args.in_chans,
+        chans = args.chans,
+        num_pool_layers = args.num_pool_layers,
+        drop_prob = 0.0,
+        residual_connection = args.residual,
+    ).to(device)
     
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     
-    #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 60, 70, 80, 90, 100], gamma=0.5)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='max', factor=args.lr_gamma, patience=args.lr_patience, 
         threshold=args.lr_threshold, threshold_mode='abs', cooldown=0, 
@@ -189,13 +168,10 @@ def cli_main(args):
             noise = get_noise(inputs,noise_seed, fix_noise = args.fix_noise, noise_std = args.noise_std/255.)
             noisier_noise = get_noise(inputs,torch.mul(noise_seed,10),fix_noise = args.fix_noisier, noise_std = args.noise_std_noisier/255.)
                         
-            #noise_target = get_noise(inputs,noise_seed.item()*10, noise_std = args.noise_std_target/255.)
-            #noisy_targets = noise_target + inputs 
 
             noisy_inputs = noise + inputs
             noisier_image = noisy_inputs + noisier_noise
             outputs = model(noisier_image)
-            # In loss function, I changed outputs to noisy_targets for self-supervision
             loss = F.mse_loss(outputs, noisy_inputs, reduction="sum") / torch.prod(torch.tensor(inputs.size())) #(inputs.size(0) * 2)
 
             model.zero_grad()
@@ -448,99 +424,7 @@ def f_restore_file(args):
         args.experiment_dir = args.restore_mode[:args.restore_mode.find('/checkpoints')]
             
 
-def extract_tensorboard_information(dist_exps_list):
-    '''
-    https://stackoverflow.com/questions/41074688/how-do-you-read-tensorboard-files-programmatically
-    '''
-    print('Extract and store information from tensorboard.')
-    for exp in dist_exps_list:
-        #print(exp)
-        # Get train size
-        ts = int(exp[exp.find('_t')+2:exp.find('c')-3])
-        # Get batch size
-        bs = int(exp[exp.find('_bs')+3:exp.find('_lr')])    
 
-        checkpoint_path = glob.glob('../' + exp +'/unet*')
-        if len(checkpoint_path) != 1:
-            raise ValueError("There is either no or more than one model to load events from")
-
-        events = sorted(glob.glob(checkpoint_path[0]+"/events*"), key=os.path.getmtime)
-        #events.sort(key = lambda x: int(x[x.find('tfevents.')+9:x.find('.DA')]))
-        events.sort(key = lambda x: int(x[x.find('tfevents.')+9:x.find('tfevents.')+19]))
-        #print(events)
-
-        if events:
-            epoch = np.zeros((1,3))
-            ssim_valid = np.zeros((1,3))
-            psnr_valid = np.zeros((1,3))
-            loss_train = np.zeros((1,3))
-            lr = np.zeros((1,3))
-
-            for event in events:
-                start = time.process_time()
-                ea = event_accumulator.EventAccumulator(event,
-                    size_guidance={event_accumulator.SCALARS: 0,event_accumulator.IMAGES: 1,})
-                ea.Reload()
-
-                # Get all other data as numpy arrays of size num_epochs x 2, with steps in first column and calues in second column
-                w_times, step_nums, vals = zip(*ea.Scalars('epoch'))
-                epoch_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                w_times, step_nums, vals = zip(*ea.Scalars('ssim/valid'))
-                ssim_valid_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                w_times, step_nums, vals = zip(*ea.Scalars('psnr/valid'))
-                psnr_valid_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                w_times, step_nums, vals = zip(*ea.Scalars('loss/train'))
-                loss_train_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                w_times, step_nums, vals = zip(*ea.Scalars('lr'))
-                lr_tmp = np.vstack((np.array(step_nums), np.array(vals),np.array(w_times))).T
-
-                epoch = np.vstack((epoch,epoch_tmp))
-                ssim_valid = np.vstack((ssim_valid,ssim_valid_tmp))
-                psnr_valid = np.vstack((psnr_valid,psnr_valid_tmp))
-                loss_train = np.vstack((loss_train,loss_train_tmp))
-                lr = np.vstack((lr,lr_tmp))
-
-                end = time.process_time() - start
-                #print(np.round(end/60,3))
-
-            epoch = epoch[1:,:]
-            ssim_valid = ssim_valid[1:,:]
-            psnr_valid = psnr_valid[1:,:]
-            loss_train = loss_train[1:,:]
-            lr = lr[1:,:]
-
-            # Compute stats
-            num_epochs = epoch[-1,1]+1
-            best_epoch = np.where(psnr_valid[:,1]==np.max(psnr_valid[:,1]))[0][0]+1
-            steps_per_epoch = np.ceil(ts/bs)
-            best_steps = steps_per_epoch * best_epoch
-            gpu_hours = np.min(epoch[1:,2]-epoch[0:-1,2])*num_epochs/(60*60)
-            #print(gpu_hours)        
-
-            # Save to dict
-            stats_dict = {}
-            stats_dict['exp_name'] = exp
-            stats_dict['batch_size'] = bs
-            stats_dict['train_size'] = ts
-            stats_dict['steps_per_epoch'] = steps_per_epoch
-            stats_dict['num_epochs'] = num_epochs
-            stats_dict['best_epoch'] = best_epoch
-            stats_dict['best_steps'] = best_steps
-            stats_dict['lr'] = lr
-            stats_dict['loss_train'] = loss_train
-            stats_dict['psnr_valid'] = psnr_valid
-            stats_dict['ssim_valid'] = ssim_valid
-            stats_dict['epoch'] = epoch
-            stats_dict['gpu_hours'] = gpu_hours
-
-            np.save(checkpoint_path[0]+"/tb_events_dict.npy", stats_dict)
-        else:
-            print('This experiment is on a different server.')
-    print('All tensorboard event files extracted.')
 
 def infer_images(args):
     USE_CUDA = True
@@ -588,10 +472,7 @@ def infer_images(args):
         noise =  torch.randn(ISource.shape,generator = gen) * args.noise_std/255.
         INoisy = noise.to(device) + ISource
         
-        # Why do we clamp the output into range [0,1]?
         out = torch.clamp(net(INoisy), 0., 1.).cpu()
-        #out = net(INoisy).cpu()
-        # print(out.size()) (1,3,297,500) (BxCxHxW)
         out = torch.squeeze(out,0) # Get rid of the 1 in dim 0.
         im = transformIm(out)
 
