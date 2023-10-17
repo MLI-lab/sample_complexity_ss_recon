@@ -5,14 +5,18 @@ import numpy as np
 import os
 import traceback
 
-from functions.main import main_train, main_test
+from functions.main_graddiff import main_train
 
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 # %%
 
 ##################################
 # Customize hyperparemters
+
+# Specify an ID for each experiment, e.g. 001,002,... 
+exp_nums =  ['001']
+
 
 # Specify an ID for each experiment, e.g. 001,002,... 
 exp_nums =  ['001']
@@ -32,6 +36,7 @@ exp_nums =  ['001']
 #test_4713_selfsup_slice
 #val_313_selfsup_slice
 
+
 hp_all_exps = {
     #############################################################
     ### SET FALGS AND PICK NUMBER OF RUNS ###
@@ -46,20 +51,20 @@ hp_all_exps = {
 
     #############################################################
     ### CHOOSE DATASETS ###
-    # Path to data directories
-    'data_path' : ['../../../media/ssd1/fastMRIdata/brain/'],
+    # Path to data directories: 
+    'data_path' : ['/media/ssd1/fastMRIdata/brain/'],
     # Path to val data directories. Only specify if different from data_path.
     'val_path' : [None],
     # Path to test data directories. Only specify if different from data_path.
     'test_path' : [None],
     # Path to sensitivity maps directories. 
-    'smaps_path' : ['../../../media/ssd1/fastMRIdata/brain_sensmaps_train_and_val/'],
+    'smaps_path' : ['/media/ssd1/fastMRIdata/brain_sensmaps_train_and_val/'],
     # If true sens maps are loaded in the train, validation and test loader.
     'provide_senmaps' : [True],
     # Choose a training set, e.g. train_491_selfsup_slice
-    'train_set' : ['./datasets/train_48_selfsup_slice.yaml'],
+    'train_set' : ['./datasets/train_9977_selfsup_slice.yaml'],
     # Specify the size of the training set.
-    'train_size' : [50],
+    'train_size' : [10000],
     # Choose a validation set.
     'val_set' : ['./datasets/val_313_selfsup_slice.yaml'],
     # Choose test sets: 
@@ -79,7 +84,7 @@ hp_all_exps = {
     # Note that masks still differ over slices in a volume.
     # If False: Supervised training draws a new input mask in every epoch for every training slice
     # Self-supervised still always draws the same set of frequecies defined by 'acceleration_total', but the split into input and target is re-sampled in every epoch.
-    'use_mask_seed_for_training' : [False],
+    'use_mask_seed_for_training' : [True],
 
     #############################################################
     ### ADDITIONAL FLAGS FOR SELF-SUPERVISED TRAINING
@@ -108,7 +113,7 @@ hp_all_exps = {
     # If True, then the network input is not cropped.
     'compute_sup_loss_in_kspace' : [True],
     # Maximal number of epochs.
-    'num_epochs' : [1000],
+    'num_epochs' : [2],
     # Initial learning rate.
     'lr' : [1e-3],
     # Batch size for mini batch training.
@@ -155,6 +160,8 @@ hp_all_exps = {
     # Save images from the testset to the log directory. Dictionary containing filenames and slice numbers. Put empty dictionary to not log images
     'save_test_images': [{'file_brain_AXT2_207_2070041': 7, 'file_brain_AXT2_201_2010484': 12, 'file_brain_AXT2_203_2030348': 3,'file_brain_AXT2_209_6001477':9, 'file_brain_AXT2_210_6001600': 6, 'file_brain_AXT2_205_2050106': 7}],
 }  
+
+
 
 
 # Sanity checks
@@ -204,7 +211,7 @@ for ee in range(len(exp_nums)):
         hp_exp['seed'] = int(42 + 10*rr)
         hp_exp['exp_name'] = exp_name
         if not hp_exp['train_set']:
-            hp_exp['train_set'] = f"./datasets/train_{hp_exp['train_size']}_filenames_slice.yaml"
+            hp_exp['train_set'] = f"../datasets/train_{hp_exp['train_size']}_filenames_slice.yaml"
         ########
         # Training
         ########
@@ -214,7 +221,6 @@ for ee in range(len(exp_nums)):
                 hp_exp['mode'] = 'train'
                 # Perform training
                 train_meters, val_metric_dict = main_train(hp_exp)
-                
                 print('\n{} - Training finished\n'.format(exp_name))
         except:
             with open("./"+exp_name+"/errors_train.txt", "a+") as text_file:
@@ -222,30 +228,6 @@ for ee in range(len(exp_nums)):
                 print(error_str, file=text_file)   
             print(error_str)
         
-        ########
-        # Testing
-        ########
-        try:
-            if hp_exp['testing']:  #
-
-                for test_set in hp_exp['test_sets']:
-                    print('\n{} - Testing {}\n'.format(exp_name, test_set))
-
-                    # Prepare args for testing
-                    hp_exp['test_set'] = test_set
-                    hp_exp['mode'] = 'test'
-                    hp_exp['resume_from_which_checkpoint'] = 'best'
-                    
-                    # Create a directory reconstructions with all reconstructions
-                    main_test(hp_exp)
-
-                    print('\n{} - Testing finished\n'.format(exp_name))
-                    
-        except:
-            with open("./"+exp_name+"/errors_test.txt", "a+") as text_file:
-                error_str = traceback.format_exc()
-                print(error_str, file=text_file)   
-            print(error_str)   
 # %%
 
 

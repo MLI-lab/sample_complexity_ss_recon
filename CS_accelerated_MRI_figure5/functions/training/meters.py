@@ -1,6 +1,6 @@
 import time
 import torch
-
+import numpy as np
 
 class AverageMeter(object):
     def __init__(self):
@@ -60,3 +60,18 @@ class TimeMeter(object):
     def elapsed_time(self):
         return self.init + (time.time() - self.start)
 
+class TrackMeter_testing(object):
+    def __init__(self,):
+        self.reset()  
+
+    def reset(self):
+        self.val = []
+        self.avg = 0
+        self.std = 0
+
+    def update(self, val,):
+        if isinstance(val, torch.Tensor):
+            val = val.item()
+        self.val.append(val)
+        self.avg = np.mean(self.val)
+        self.std = np.std(self.val)
