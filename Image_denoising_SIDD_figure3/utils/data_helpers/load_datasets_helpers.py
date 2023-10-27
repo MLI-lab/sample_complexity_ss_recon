@@ -109,11 +109,11 @@ class SIDDSubdataset_fromArray(torch.utils.data.Dataset):
         path_to_benchmark_images = "/tobit/N2N_SIDD_denoising/raw_validation_data/SIDD_Benchmark_Data/"
 
         if mode=='train':
-            inputs = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_input_array_raw_correct_bayer_correctly.npy')#_array_raw.npy') 
+            inputs = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_input_array_raw.npy') 
             if supervised:
-                targets = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_gt_array_raw_correct_bayer_correctly.npy')#_array_raw.npy')
+                targets = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_gt_array_raw.npy')
             else:
-                targets = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_noisy_target_array_raw_correct_bayer_correctly.npy')#_array_raw.npy')
+                targets = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_noisy_target_array_raw.npy')
 
             self.examples = []
 
@@ -202,10 +202,10 @@ class SIDDSubdataset_fromArray_gradDiff(torch.utils.data.Dataset):
 
 
         if mode=='train':
-            inputs = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_input_array_raw_correct_bayer_correctly.npy')#_array_raw.npy') 
+            inputs = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_input_array_raw.npy') 
     
-            targets_sup = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_gt_array_raw_correct_bayer_correctly.npy')#_array_raw.npy')
-            targets_self = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_noisy_target_array_raw_correct_bayer_correctly.npy')#_array_raw.npy')
+            targets_sup = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_gt_array_raw.npy')
+            targets_self = np.load(f'{path_to_train}SIDD_train_all_scenes_patchSize_{patch_size}_patches_125594_noisy_target_array_raw.npy')
 
             self.examples = []
 
