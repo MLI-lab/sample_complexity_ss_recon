@@ -29,7 +29,7 @@ We used the bart toolbox to pre-compute the sensitivity maps for the experiments
 ImageNet is an open dataset, and you can request access at https://image-net.org/download.php. To run the experiments from our paper, you need to download the ImageNet train set.
 
 ### Smartphone Image Denoising Dataset (SIDD)
-SIDD is an open dataset, and can be donwloaded from https://www.eecs.yorku.ca/~kamel/sidd/. To run the experiments from our paper you need to download the SIDD-Medium dataset and the SIDD validation data.
+SIDD is an open dataset, and can be donwloaded from https://www.eecs.yorku.ca/~kamel/sidd/. To run the experiments from our paper you need to download the SIDD-Medium dataset, the SIDD validation data and the SIDD benchmark data as it contains the meta data for the validation set.
 
 ### fastMRI
 FastMRI is an open dataset, however you need to apply for access at https://fastmri.med.nyu.edu/. To run the experiments from our paper, you need to download the fastMRI brain dataset.
